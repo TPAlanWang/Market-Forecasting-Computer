@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>出貨港預測計算機 v2</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --warning-color: #e67e22;
+            --danger-color: #e74c3c;
+            --bg-color: #f4f7f6;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        h2 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 1.5rem;
+        }
+        .hint-text {
+            color: #888;
+            font-size: 0.85rem;
+            text-align: center;
+            margin-bottom: 20px;
+            display: block;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            box-sizing: border-box;
+        }
+        input:focus {
+            border-color: var(--accent-color);
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+        #result-container {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+        .normal-result {
+            background-color: #e8f4fd;
+            color: var(--primary-color);
+        }
+        .warning-text {
+            color: var(--danger-color);
+            font-weight: bold;
+            margin-top: 10px;
+            font-size: 0.95rem;
+            border-top: 1px solid rgba(231, 76, 60, 0.2);
+            padding-top: 10px;
+        }
+        .error-result {
+            background-color: #fdeaea;
+            color: var(--danger-color);
+            font-weight: bold;
+            border: 1px solid var(--danger-color);
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>出貨港預測計算機</h2>
+    <span class="hint-text">※ 本計算機僅能預測上漲中的行情</span>
+    
+    <div class="input-group">
+        <label>預計出貨時間 (小時後)</label>
+        <input type="number" id="a" placeholder="0" step="any">
+    </div>
+    
+    <div class="input-group">
+        <label>目標港現在價格 (元)</label>
+        <input type="number" id="b" placeholder="0">
+    </div>
+    
+    <div class="input-group">
+        <label>現在行情 (%)</label>
+        <input type="number" id="c" placeholder="0">
+    </div>
+
+    <button onclick="calculate()">計算預測</button>
+
+    <div id="result-container"></div>
+</div>
+
+<script>
+    function calculate() {
+        const a = parseFloat(document.getElementById('a').value);
+        const b = parseFloat(document.getElementById('b').value);
+        const c = parseFloat(document.getElementById('c').value);
+        const resultDiv = document.getElementById('result-container');
+
+        if (isNaN(a) || isNaN(b) || isNaN(c)) {
+            alert("請完整輸入所有數值");
+            return;
+        }
+
+        // 計算邏輯
+        const A = b / (c / 100);    // 基礎售價
+        const B = c + (a * 7.5);    // 未來行情 (%)
+        const C = A * (B / 100);    // 未來價格
+
+        resultDiv.style.display = 'block';
+        resultDiv.className = ''; // 清除舊樣式
+
+        // 判斷顯示邏輯
+        if (B > 180) {
+            // 超出 180%：顯示錯誤訊息
+            resultDiv.classList.add('error-result');
+            resultDiv.innerHTML = `超出上漲範圍過多，無法預測行情`;
+        } else {
+            // 顯示正常結果
+            resultDiv.classList.add('normal-result');
+            let content = `
+                <div style="font-size: 0.9rem; margin-bottom: 5px;">${a} 小時後大約為</div>
+                <div style="font-size: 1.5rem; font-weight: bold; color: #e74c3c;">
+                    ${Math.round(C).toLocaleString()} 元 (${B.toFixed(1)}%)
+                </div>
+            `;
+
+            // 若 B >= 160%：增加警告文字
+            if (B >= 160) {
+                content += `<div class="warning-text">⚠️ 注意，行情可能在達標前已經下跌！</div>`;
+            }
+            
+            resultDiv.innerHTML = content;
+        }
+    }
+</script>
+
+</body>
+</html>
